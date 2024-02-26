@@ -1,0 +1,475 @@
+#include < amxmodx >
+#include < amxmisc >
+#include < fakemeta >
+#include < fakemeta_util >
+#include < engine >
+#include < fun >
+#include < cstrike >
+#include < hamsandwich >
+#include < ColorChat >
+
+#define PLUGIN "Anti-Furien Weapons"
+#define VERSION "2.1"
+#define AUTHOR "DaNe"
+
+#define is_valid_player(%1) (1 <= %1 <= 32)
+
+#define VIP_FLAG ADMIN_LEVEL_H
+
+/****** Playeri ******/
+
+native get_aeolis(id)
+native get_buffm4(id)
+native get_buffak(id)
+native get_coilgun(id)
+native give_balrog(id)
+/****** VIP ******/
+
+native give_railcannon(id)
+native give_weapon_plasmagun(id)
+native give_m1887(id)
+native get_gatling(id)
+native give_janus5(id)
+native give_uzzi(id)
+
+/**** Arme Secundare *****/
+
+native give_weapon_dcp ( id )
+native get_bloodhunter(id)
+native give_mileage(id)
+native get_harry(id)
+native give_wildwing(id)
+
+new const szTag [] = "*|Furien Remade|*"
+new bool: AlreadyChoose[ 33 ];
+
+native get_dollars(id);
+native set_dollars(id, value);
+
+public plugin_init( ) {
+	register_plugin( PLUGIN, VERSION, AUTHOR )
+	
+	register_clcmd("say /arme","ClcmdWeaponsMenus");
+	register_clcmd("say_team /arme","ClcmdWeaponsMenus");
+	
+	RegisterHam( Ham_Spawn, "player", "fwPlayerSpawn", 1 );
+}
+
+public fwPlayerSpawn( id ) {
+	if( get_user_team ( id ) == 2 ) 
+	{
+		AlreadyChoose[ id ] = false;
+		ShowWeaponsMenu( id );
+	}
+	return 1;
+}
+
+public ShowWeaponsMenu( id ) 
+{
+	new FurienWeaponsMenu = menu_create( "\w[ \dFurien Remade Level||Class||Power \w]^n\yAnti-Furien Weapons", "FurienWeaponsHandler")
+	new g_money = get_dollars(id);
+	
+	menu_additem( FurienWeaponsMenu, "\yClassic Weapons", "1", 0 )
+	menu_additem( FurienWeaponsMenu, "\rV.I.P Weapons^n", "2", 0 )	
+	
+	if (g_money < 65 )
+	{
+		menu_additem( FurienWeaponsMenu, "\yAeolis            - \d[ \rLocked \d]", "3", 0 )
+	}
+	else if( g_money >= 65 ) 
+	{
+		menu_additem( FurienWeaponsMenu, "\yAeolis          \r - \w[ \r65 \w$ ]", "3", 0 )
+	}	
+	if ( g_money < 70 )
+	{
+		menu_additem( FurienWeaponsMenu, "\yM4A1            - \d[ \rLocked \d]", "4", 0 )
+	} 
+	else if ( g_money >=70 )
+	{
+		menu_additem( FurienWeaponsMenu, "\yM4A1           \r- \w[ \r70 \w$ ]", "4", 0 )
+	}
+	
+	if ( g_money < 75 )
+	{
+		menu_additem( FurienWeaponsMenu, "\yAk47             - \d[ \rLocked \d]", "5", 0 )
+	}
+	
+	else if (g_money >=75 )
+	{
+		menu_additem( FurienWeaponsMenu, "\yAk47            \r- \w[ \r75 \w$ ]", "5", 0 )
+	}	
+	
+	if ( g_money < 80 )
+	{
+		menu_additem( FurienWeaponsMenu, "\yCoilgun          - \d[ \rLocked \d]", "6", 0 )
+	}
+	
+	else if ( g_money>=80 )
+	{
+		menu_additem( FurienWeaponsMenu, "\yCoilgun         \r- \w[ \r80 \w$ ]", "6", 0 )
+	}
+	
+	if ( g_money < 90 )
+	{
+		menu_additem( FurienWeaponsMenu, "\yBalrog Eth      - \d[ \rLocked \d]", "7", 0 )
+	}
+	
+	else if ( g_money>=90 )
+	{
+		menu_additem( FurienWeaponsMenu, "\yBalrog Eth     \r- \w[ \r90 \w$ ]", "7", 0 )
+	}
+	
+	menu_setprop( FurienWeaponsMenu, MPROP_EXIT, MEXIT_ALL )
+	menu_display( id, FurienWeaponsMenu, 0 );
+}
+
+public FurienWeaponsHandler( id, FurienWeaponsMenu, item ) 
+{
+	if ( get_user_team ( id ) != 2 ) return 1;
+	
+	if( item == MENU_EXIT ) 
+	{
+		menu_destroy( FurienWeaponsMenu )
+		return PLUGIN_HANDLED;
+	}
+	
+	switch( item ) 
+	{
+		case 0 : 
+		{
+			ArmeNormale( id ) 
+		}
+		case 1 : 
+		{
+			if( get_user_flags( id ) & VIP_FLAG ) 
+			{
+				ArmeVIP( id ) 
+			}
+			else 
+			{
+				ColorChat( id, GREEN, "^x01[^x04 %s^x01 ] Aceste arme sunt numai pentru membri^x04 V.I.P.", szTag )
+				ShowWeaponsMenu( id )
+				return PLUGIN_HANDLED 
+			}
+		}
+		
+		case 2 : 
+		{
+			new g_money = get_dollars (id) - 65;
+			if (g_money < 0 )
+			{
+				client_print(id, print_center, "You haven't enough Money !");
+				ShowWeaponsMenu( id )
+				return 1;
+			}
+			else
+			{
+				get_aeolis(id)
+				AlreadyChoose[ id ] = true;
+				set_task( 0.1, "ShowSecondary", id )
+			}
+		}
+		
+		case 3 : 
+		{
+			new g_money = get_dollars (id) - 70;
+			if (g_money < 0 )
+			{
+				client_print(id, print_center, "You haven't enough Money !");
+				ShowWeaponsMenu( id )
+				return 1;
+			}
+			else
+			{
+				set_dollars(id, g_money )
+				get_buffm4(id)
+				AlreadyChoose[ id ] = true;
+				set_task( 0.1, "ShowSecondary", id )
+			}
+		}
+		
+		case 4 : 
+		{
+			new g_money = get_dollars (id) - 75;
+			if (g_money < 0 )
+			{
+				client_print(id, print_center, "You haven't enough Money !");
+				ShowWeaponsMenu( id )
+				return 1;
+			}
+			else
+			{
+				set_dollars(id, g_money );
+				get_buffak(id)
+				AlreadyChoose[ id ] = true;
+				set_task( 0.1, "ShowSecondary", id )
+			}
+		}
+		
+		case 5 : 
+		{
+			new g_money = get_dollars (id) - 80;
+			if (g_money < 0 )
+			{
+				client_print(id, print_center, "You haven't enough Money !");
+				ShowWeaponsMenu( id )
+				return 1;
+			}
+			else
+			{
+				set_dollars(id, g_money );
+				get_coilgun(id)
+				AlreadyChoose[ id ] = true;
+				set_task( 0.1, "ShowSecondary", id )
+			}
+		}
+		
+		case 6 : 
+		{
+			new g_money = get_dollars (id) - 90;
+			if (g_money < 0 )
+			{
+				client_print(id, print_center, "You haven't enough Money !");
+				ShowWeaponsMenu( id )
+				return 1;
+			}
+			else
+			{
+				set_dollars(id, g_money );
+				give_balrog(id)
+				AlreadyChoose[ id ] = true;
+				set_task( 0.1, "ShowSecondary", id )
+			}
+		}
+	}
+	menu_destroy( FurienWeaponsMenu )
+	return PLUGIN_HANDLED
+}
+
+public ArmeNormale( id ) 
+{
+	
+	new MeniuArmeNormale = menu_create( "\w[ \dFurien Remade Level||Class||Power \w]^n\yClassic Weapons", "ArmeNormaleHandler" )
+	
+	menu_additem( MeniuArmeNormale, "\yAk47 Transformers^n \w+ \rUSP Panda", "1", 0 )
+	menu_additem( MeniuArmeNormale, "\yM4a1 Transformers^n \w+ \rUSP Panda", "2", 0 )
+	menu_additem( MeniuArmeNormale, "\yFamas Zaschitny^n \w+ \rDeagle Fridentorp's", "3", 0 )
+	
+	menu_display( id, MeniuArmeNormale, 0 )
+	return PLUGIN_HANDLED;
+}
+
+public ArmeNormaleHandler( id, MeniuArmeNormale, item ) 
+{
+	if( item == MENU_EXIT ) 
+	{
+		menu_destroy( MeniuArmeNormale )
+		return PLUGIN_HANDLED 
+	}
+	
+	switch( item ) 
+	{
+		case 0: 
+		{
+			give_item( id, "weapon_ak47" )
+			cs_set_user_bpammo( id, CSW_AK47, 300 )
+			
+			give_item( id, "weapon_usp" )
+			cs_set_user_bpammo( id, CSW_USP, 90 )
+			AlreadyChoose[ id ] = true
+		}
+		case 1: 
+		{
+			give_item( id, "weapon_m4a1" )
+			cs_set_user_bpammo( id, CSW_M4A1, 300 )
+			
+			give_item( id, "weapon_usp" )
+			cs_set_user_bpammo( id, CSW_USP, 90 )
+			AlreadyChoose[ id ] = true
+		}
+		case 2: 
+		{
+			give_item( id, "weapon_famas" )
+			cs_set_user_bpammo( id, CSW_FAMAS, 300 )
+			
+			give_item( id, "weapon_deagle" )
+			cs_set_user_bpammo( id, CSW_DEAGLE, 90 )
+			AlreadyChoose[ id ] = true
+		}
+	}
+	menu_destroy( MeniuArmeNormale )
+	return PLUGIN_HANDLED
+}
+
+public ArmeVIP( id ) {
+	new MeniuArmeVIP = menu_create( "\w[ \dFurien Remade Level||Class||Power \w]^n\yWeapons \rV.I.P", "ArmeVIPHandler" );
+	
+	menu_additem( MeniuArmeVIP, "\yRailcannon", "1", 0 );
+	menu_additem( MeniuArmeVIP, "\yPlasmagun", "2", 0 );
+	menu_additem( MeniuArmeVIP, "\yM1887", "3", 0 );
+	menu_additem( MeniuArmeVIP, "\yG. Volcano", "4", 0);
+	menu_additem( MeniuArmeVIP, "\yJanus V        \d[ \rOwner \d]", "5", ADMIN_IMMUNITY );
+	menu_additem( MeniuArmeVIP, "\yDuo Uzzi       \d[ \rOwner \d]", "6", ADMIN_IMMUNITY );
+	
+	menu_display( id, MeniuArmeVIP, 0 )
+	return PLUGIN_HANDLED;
+}
+
+public ArmeVIPHandler( id, MeniuArmeVIP, item )
+{
+	if( item == MENU_EXIT ) 
+	{
+		menu_destroy( MeniuArmeVIP )
+		return PLUGIN_HANDLED
+	}
+	
+	switch( item ) 
+	{
+		case 0:
+		{
+			give_railcannon(id);
+			set_task( 0.1, "ShowSecondary", id );
+			AlreadyChoose[ id ] = true;
+		}
+		case 1: 
+		{
+			give_weapon_plasmagun(id);
+			set_task( 0.1, "ShowSecondary", id );
+			AlreadyChoose[ id ] = true;
+		}
+		case 2:
+		{
+			give_m1887(id);
+			set_task( 0.1, "ShowSecondary", id );
+			AlreadyChoose[ id ] = true;
+		}
+		
+		case 3:
+		{
+			get_gatling(id);
+			set_task( 0.1, "ShowSecondary", id );
+			AlreadyChoose[ id ] = true;
+		}
+		case 4:
+		{
+			give_janus5(id);
+			set_task( 0.1, "ShowSecondary", id );
+			AlreadyChoose[ id ] = true;
+		}
+		case 5:
+		{
+			give_uzzi(id);
+			set_task( 0.1, "ShowSecondary", id );
+			AlreadyChoose[ id ] = true;
+		}
+			
+	}
+	menu_destroy( MeniuArmeVIP )
+	return PLUGIN_HANDLED
+	}
+
+public ShowSecondary( id ) {
+	new MeniuSecondary = menu_create( "\w[ \dFurien Remade Level||Class||Power \w]^n\yChoose Secondary Weapons ", "CSOSecondGiver" )
+	
+	menu_additem( MeniuSecondary, "\yChinese Dual", "1", 0 );
+	menu_additem( MeniuSecondary, "\yCrimson Hunt", "2", 0 );
+	menu_additem( MeniuSecondary, "\yMileage Skull^n", "3",0 );
+	menu_additem( MeniuSecondary, "\yHarry Magic       \d[ \rVIP \d]", "4", ADMIN_LEVEL_H );
+	menu_additem( MeniuSecondary, "\yWild Wing          \d[ \rVIP \d]", "5", ADMIN_LEVEL_H );
+	
+	menu_setprop( MeniuSecondary, MPROP_EXIT, MEXIT_ALL )
+	menu_display( id, MeniuSecondary, 0 )
+}
+
+public CSOSecondGiver( id, MeniuSecondary, item ) 
+{
+	if( item == MENU_EXIT ) 
+	{
+		menu_destroy( MeniuSecondary )
+		return PLUGIN_HANDLED
+	}
+	
+	switch( item ) 
+	{
+		case 0: 
+		{
+			give_weapon_dcp(id);
+			AlreadyChoose[ id ] = true;
+		}
+		
+		case 1:
+		{
+			get_bloodhunter(id);
+			AlreadyChoose[ id ] = true;
+		}
+		
+		case 2:
+		{
+			give_mileage(id);
+			AlreadyChoose[ id ] = true;
+		}
+		
+		case 3:
+		{
+			get_harry(id);
+			AlreadyChoose[ id ] = true;
+		}
+		
+		case 4:
+		{
+			give_wildwing(id);
+			AlreadyChoose[ id ] = true;
+		}
+		
+	}
+	menu_destroy( MeniuSecondary );
+	return PLUGIN_HANDLED
+}
+
+public ClcmdWeaponsMenus( id )
+	{
+	if( !is_user_alive( id ) ) {
+		client_print(id, print_center, "You can't select your weapons when you're dead !" );
+		return 1;
+	}
+	/*else
+	if( get_user_team( id ) == 1 ) {
+		client_print(id, print_center, "Doar anti furieni au acces la meniu !" );
+		return 1;
+	}*/
+	
+	if( AlreadyChoose[ id ] ) {
+		client_print(id, print_center, "You select your weapons in this round !");
+		return 1;
+	}
+	
+	if( get_user_team( id ) == 2 ) {
+		ShowWeaponsMenu( id );
+	}
+	return 1;
+}
+
+public client_putinserver( id )
+{
+	set_task( 1.0, "ShowUserDetails", id, _, _, "b" );
+}
+
+public client_disconnect( id )
+{
+	remove_task( id );
+}
+
+public ShowUserDetails( id )
+{
+	if( is_user_connected( id ) && !is_user_bot( id ) && is_user_alive( id ) )
+	{
+		new Health, Armor, Money, Gold;
+		Health = get_user_health( id );
+		Armor = get_user_armor( id );
+		Money = get_dollars( id );
+		Gold = cs_get_user_money( id );
+		
+		set_hudmessage( 100, 50, 150,0.01, 0.94, 0, 6.0, 12.0, _, _, _ );
+		show_hudmessage( id, " |HP: %d  || AP:  %d  || Money %d|| Gold: %d| ", Health, Armor, Money, Gold );
+	}
+}
